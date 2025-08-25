@@ -36,9 +36,6 @@ class ModeloController extends Controller
         $this->modelo = $modelo;
     }
 
-    /**
-     * Display a listing of the resource.
-     */
     public function index(Request $request)
     {
         $modeloRepository = new ModeloRepository($this->modelo);
@@ -52,7 +49,7 @@ class ModeloController extends Controller
         if($request->filled('atributos')) {
             $modeloRepository->selectAtributos($request->atributos);
         }
-                
+
         if($request->filled('filtro')) {
             $modeloRepository->filtrarRegistros($request->filtro);
         }
@@ -60,18 +57,11 @@ class ModeloController extends Controller
         return response()->json($modeloRepository->getResult());
     }
 
-    /**
-     * Store a newly created resource in storage.
-     */
     public function store(Request $request)
     {
-        // PRIMEIRO VALIDA OS CAMPOS
         $request->validate($this->modelo->rules(), $this->modelo->feedback());
-        // NÃO É NECESSÁRIO VERIFICAR SE JÁ EXISTE, UMA VEZ QUE A VALIDAÇÃO FAZ ISSO
-        // FAZ UPLOAD DA IMG
         $imagem_urn = $this->uploadImagem($request);
 
-        //CRIA O OBJ E SALVA
         $modelo = Modelo::create([
             'marca_id' => $request->marca_id,
             'nome' => $request->nome,
@@ -87,9 +77,6 @@ class ModeloController extends Controller
 
     }
 
-    /**
-     * Display the specified resource.
-     */
     public function show(Request $request, int $id)
     {
         $modeloRepository = new ModeloRepository($this->modelo);
@@ -103,7 +90,7 @@ class ModeloController extends Controller
         if($request->filled('atributos')) {
             $modeloRepository->selectAtributos($request->atributos);
         }
-                
+
         if($request->filled('filtro')) {
             $modeloRepository->filtrarRegistros($request->filtro);
         }
@@ -117,9 +104,6 @@ class ModeloController extends Controller
         return response()->json($modelo, 200);
     }
 
-    /**
-     * Update the specified resource in storage.
-     */
     public function update(Request $request, int $id)
     {
         $modelo = Modelo::find($id);
@@ -128,7 +112,6 @@ class ModeloController extends Controller
         }
 
         if ($request->isMethod('patch')) {
-            // Regras dinâmicas para PATCH
             $regrasDinamicas = [];
             foreach ($this->modelo->rules($modelo->id) as $field => $rule) {
             if ($request->has($field)) {
@@ -142,22 +125,17 @@ class ModeloController extends Controller
 
             $request->validate($regrasDinamicas, $this->modelo->feedback());
 
-            // Atualiza apenas os campos enviados na requisição
             $dadosAtualizados = $request->only(array_keys($regrasDinamicas));
-
-            // Se houver upload de imagem, processa e atualiza o campo
             if ($request->hasFile('imagem')) {
             $isRemoved = $this->removeImagem($modelo->imagem);
             // Removendo a imagem antiga
             if (!$isRemoved) {
                 return response()->json(['error' => 'Falha ao atualizar a imagem.'], 500);
             }
-            // Atualizando para a imagem nova
             $imagem_urn = $this->uploadImagem($request);
             $dadosAtualizados['imagem'] = $imagem_urn;
             }
 
-            // Atualiza os campos no modelo
             $modelo->fill($dadosAtualizados);
             $modelo->save();
 
@@ -187,9 +165,6 @@ class ModeloController extends Controller
         }
     }
 
-    /**
-     * Remove the specified resource from storage.
-     */
     public function destroy(int $id)
     {
         $modelo = Modelo::find($id);
